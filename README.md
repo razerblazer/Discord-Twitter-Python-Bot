@@ -6,7 +6,7 @@ The bot uses the Tweepy.py API to access the needed [twitter data](https://twitt
 # Current Implemented Commands:
 - `$subscribe ______`: The user can type in a Twitter screen name/username for the bot to keep track of that particular user and post any new tweets in the discord channel this command was requested from.
 - `$unsubscribe ______`: The user can similarly type in this command to stop tracking the posts of a particular user that the discord channel is already subscribed to.
-- `$listsubs`: This command will generate a discord embed that lists all of the twitter users to the channel this command was typed in. 
+- `$listsubs`: This command will generate a discord embed that lists all of the twitter users the channel is subscribed to in the channel this command was typed in. 
 
 # Bug fixes(Just Features lol) and New Stuff Added:
 v1.1(I guess?) fixed issue where the bot subscribed to a user with no tweets in their timeline would return emptylist which resulted in a error when running through the dictionary
