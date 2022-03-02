@@ -8,7 +8,7 @@ datastore = {}  #'twitter user': 'discord channels that requested this user'
 secondaryfilestore= {}
 globaltweetstore = {}
 auth= tweepy.OAuthHandler("credentials")
-auth.set_access_token("some more credentials)
+auth.set_access_token("some more credentials")
 api= tweepy.API(auth)
 
 
@@ -35,12 +35,16 @@ async def twitter_channel_init():
                 secondaryfilestore[user].append([channel[0], channel[1]])
         file.close()
 
+
+
 async def twittermanagement():
     global datastore
     global globaltweetstore
     for c in datastore.keys():
         last_tweet = globaltweetstore[c] if c in globaltweetstore.keys() else None
         tweet = getlatesttweet(c)
+        if tweet is None:
+            continue
         if tweet.id == last_tweet:
             continue
         globaltweetstore[c] = tweet.id
@@ -48,8 +52,10 @@ async def twittermanagement():
             await u.send("Here is @"+ tweet.user.screen_name + "'s latest tweet!\n" + " https://twitter.com/"+ tweet.user.screen_name+ "/status/" + tweet.id_str)
 
 def getlatesttweet(user):
-    return next(tweepy.Cursor(api.user_timeline, screen_name = user).pages())[0]
-
+    try:
+        return next(tweepy.Cursor(api.user_timeline, screen_name = user).pages())[0]
+    except:
+        return None
 def validusertest(user):
     try:
         api.get_user(screen_name=user)
@@ -64,6 +70,8 @@ def checkdictionary(channel, user):
         if a == channel:
             return False
     return True
+
+
 
 @client.event
 async def on_ready():
@@ -84,11 +92,13 @@ def copylocaldictioarytofile():
 
 @client.event
 async def on_message(message):
-    print(message.content, message.author.id, client.user.id, message.channel.id, message.guild.id) #this is just for debugging purposes and gain internal info as to what the bot is seeing
+    print(message.content, message.author.id, client.user.id, message.channel.id, message.guild.id)
+    global garfcountlimiter
     global datastore
     global secondaryfilestore
     if message.author.id == client.user.id:
         return
+#twitter stuff section
     if message.content.startswith("$subscribe"):
         try:
             usernamestore = message.content.split(" ")[1]
@@ -97,11 +107,12 @@ async def on_message(message):
             return
         if validusertest(usernamestore):
             if usernamestore in datastore and checkdictionary(message.channel, usernamestore):
-                datastore[usernamestore].append(message.channel)
-                secondaryfilestore[usernamestore].append([message.guild.id, message.channel.id])
-                await message.channel.send("Twitter Posts from @" + usernamestore + " will now be posted in this channel!")
-                copylocaldictioarytofile()
-                return
+                if message.channel not in datastore[usernamestore]:
+                    datastore[usernamestore].append(message.channel)
+                    secondaryfilestore[usernamestore].append([message.guild.id, message.channel.id])
+                    await message.channel.send("Twitter Posts from @" + usernamestore + " will now be posted in this channel!")
+                    copylocaldictioarytofile()
+                    return
             elif usernamestore not in datastore:
                 datastore[usernamestore] = [message.channel]
                 secondaryfilestore[usernamestore] = [[message.guild.id, message.channel.id]]
@@ -159,11 +170,11 @@ async def on_message(message):
                 messageembed.add_field(name=twitterinfo.user.name, value="@" + subbedpeople)
         await message.channel.send(embed=messageembed)
         return
-    if message.content == "print twitterlist": #this is also just for the purposes of debugging and tracking what the bot currently has stored
+    if message.content == "print twitterlist": #for debugging purposes only
         print(datastore)
         print(secondaryfilestore)
 
-#misc commands
+#misc commands and debugging code
     if message.content == 'testdm':
         await message.author.create_dm()
         await message.author.dm_channel.send('lol it works')
