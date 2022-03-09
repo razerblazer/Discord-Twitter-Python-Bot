@@ -28,15 +28,13 @@ async def twitter_channel_init():
             if user not in datastore:
                 datastore[user] = []
             for channel in txtcontent[user]:
-                datastore[user].append(client.get_guild(channel[0]).get_channel(channel[1]))
+                datastore[user].append((client.get_guild(channel[0]).get_channel(channel[1]), channel[2]))
             if user not in secondaryfilestore:
                 secondaryfilestore[user] = []
             for chan in txtcontent[user]:
-                secondaryfilestore[user].append([channel[0], channel[1]])
+                secondaryfilestore[user].append((chan[0], chan[1], chan[2]))
         file.close()
-
-
-
+        
 async def twittermanagement():
     global datastore
     global globaltweetstore
@@ -49,13 +47,24 @@ async def twittermanagement():
             continue
         globaltweetstore[c] = tweet.id
         for u in datastore[c]:
-            await u.send("Here is @"+ tweet.user.screen_name + "'s latest tweet!\n" + " https://twitter.com/"+ tweet.user.screen_name+ "/status/" + tweet.id_str)
+            if tweet.in_reply_to_status_id_str is not None:
+                if u[1] == "1":
+                    await u[0].send("Here is @"+ tweet.user.screen_name + "'s latest tweet! This is a reply to either a tweet or comment!\n"+ "https://twitter.com/"+ tweet.user.screen_name + "/status/" + tweet.id_str)
+                    continue
+                else:
+                    continue
+            if hasattr(tweet, 'retweeted_status') is True:
+                await u[0].send("Here is @" + tweet.user.screen_name + "'s latest tweet! This is a retweet of user @" + tweet.retweeted_status.user.screen_name + "'s tweet!\n" + "https://twitter.com/"+ tweet.retweeted_status.user.screen_name + "/status/" + tweet.retweeted_status.id_str)
+                continue
+            await u[0].send("Here is @"+ tweet.user.screen_name + "'s latest tweet!\n" + " https://twitter.com/"+ tweet.user.screen_name+ "/status/" + tweet.id_str)
+
 
 def getlatesttweet(user):
     try:
         return next(tweepy.Cursor(api.user_timeline, screen_name = user).pages())[0]
     except:
         return None
+    
 def validusertest(user):
     try:
         api.get_user(screen_name=user)
@@ -67,19 +76,9 @@ def validusertest(user):
 
 def checkdictionary(channel, user):
     for a in datastore[user]:
-        if a == channel:
+        if a[0] == channel:
             return False
     return True
-
-
-
-@client.event
-async def on_ready():
-    print(f'{client.user} has connected to Discord!')
-    for guild in client.guilds:
-        print(f'{client.user} is connected to the following guild:\n{guild.name}(id: {guild.id})')
-        members = '\n - '.join([member.name for member in guild.members])
-        print(f'Guild Members:\n - {members}')
 
 def copylocaldictioarytofile():
     global secondaryfilestore
@@ -91,6 +90,15 @@ def copylocaldictioarytofile():
     fileaccess.close()
 
 @client.event
+async def on_ready():
+    print(f'{client.user} has connected to Discord!')
+    for guild in client.guilds:
+        print(f'{client.user} is connected to the following guild:\n{guild.name}(id: {guild.id})')
+        members = '\n - '.join([member.name for member in guild.members])
+        print(f'Guild Members:\n - {members}')
+
+
+@client.event
 async def on_message(message):
     print(message.content, message.author.id, client.user.id, message.channel.id, message.guild.id)
     global garfcountlimiter
@@ -98,34 +106,45 @@ async def on_message(message):
     global secondaryfilestore
     if message.author.id == client.user.id:
         return
-#twitter stuff section
+#twitter commands 
     if message.content.startswith("$subscribe"):
         try:
-            usernamestore = message.content.split(" ")[1]
+            if message.content.split(" ")[0] != "$subscribe":
+                return await message.channel.send("Did you mean $subscribe?")
+            bananasplit = message.content.split(" ")
+            if len(bananasplit) == 3:
+                usernamestore = bananasplit[1]
+                mode = bananasplit[2]
+                print(mode)
+                if (mode != '1') and (mode != '2'):
+                    return await message.channel.send("Please enter a valid mode number!")
+            else:
+                usernamestore = bananasplit[1]
+                mode = '1'
         except:
-            await message.channel.send("Did you even try to enter in a twitter username lol")
+            await message.channel.send("Did you even try to enter in a Twitter username lol")
             return
         if validusertest(usernamestore):
-            if usernamestore in datastore and checkdictionary(message.channel, usernamestore):
-                if message.channel not in datastore[usernamestore]:
-                    datastore[usernamestore].append(message.channel)
-                    secondaryfilestore[usernamestore].append([message.guild.id, message.channel.id])
-                    await message.channel.send("Twitter Posts from @" + usernamestore + " will now be posted in this channel!")
-                    copylocaldictioarytofile()
-                    return
+            if usernamestore in datastore.keys() and checkdictionary(message.channel, usernamestore):
+                datastore[usernamestore].append((message.channel, mode))
+                secondaryfilestore[usernamestore] = [(message.guild.id, message.channel.id, mode)]
+                await message.channel.send("Twitter Posts from @" + usernamestore + " will now be posted in this channel!")
+                copylocaldictioarytofile()
+                return
             elif usernamestore not in datastore:
-                datastore[usernamestore] = [message.channel]
-                secondaryfilestore[usernamestore] = [[message.guild.id, message.channel.id]]
+                datastore[usernamestore] = [(message.channel, mode)]
+                secondaryfilestore[usernamestore] = [(message.guild.id, message.channel.id, mode)]
                 await message.channel.send("Twitter Posts from @" + usernamestore + " will now be posted in this channel!")
                 copylocaldictioarytofile()
                 return
             else:
                 await message.channel.send("This channel is already subscribed to this user!")
                 return
-        await message.channel.send("The provided twitter username is either invalid or they have a private profile!")
-        return
+        return await message.channel.send("The provided Twitter username is either invalid or they have a private profile!")
     if message.content.startswith("$unsubscribe"):
         try:
+            if message.content.split(" ")[0] != "$unsubscribe":
+                return await message.channel.send("Did you mean $unsubscribe?")
             usernamestore2 = message.content.split(" ")[1]
         except:
             await message.channel.send("Did you even try to enter in a twitter username lol")
@@ -133,7 +152,7 @@ async def on_message(message):
         if validusertest(usernamestore2):
             for a in datastore:
                 for b in datastore[a]:
-                    if (b == message.channel) and (a == usernamestore2):
+                    if (b[0] == message.channel) and (a == usernamestore2):
                         datastore[a].remove(b)
                         copylocaldictioarytofile()
             for s in secondaryfilestore:
@@ -170,9 +189,11 @@ async def on_message(message):
                 messageembed.add_field(name=twitterinfo.user.name, value="@" + subbedpeople)
         await message.channel.send(embed=messageembed)
         return
-    if message.content == "print twitterlist": #for debugging purposes only
+    if message.content == "print twitterlist": #bug testing commands
         print(datastore)
         print(secondaryfilestore)
+        print(globaltweetstore)
+
 
 #misc commands and debugging code
     if message.content == 'testdm':
@@ -194,5 +215,5 @@ schedule.every(30).seconds.do(lambda: client.loop.create_task(twittermanagement(
 x = threading.Thread(target=run_scheduler)
 
 client.loop.create_task(twitter_channel_init())
-x.start()
+x.start() #check external files to for records of already stored subscription data
 client.run(TOKEN)
