@@ -249,7 +249,7 @@ async def on_message(message):
     if message.content.startswith("$help"):
         embed = discord.Embed(title="Currently available commands", description="Contact me if u wanna suggest more functionalities for this server lol")
         embed.add_field(name="Twitter functions:", value="these are current twitter functions that have been implemented")
-        embed.add_field(name="$subscribe ____________(enter in a twitter username without the @) ___ <-mode 1,2,3(1 is only tweets by the user, mode 2 is only tweets and retweets and mode 3 is any activity made by the user including replies.)", value="Tracks the listed twitter user and posts any new tweets made by them in the requested discord channel", inline=False)
+        embed.add_field(name="$subscribe ____________(enter in a twitter username without the @) ____(enter in a mode number, 1 or 2, default without any integer input is 1)", value="Tracks the listed twitter user and posts any new tweets made by them in the requested discord channel", inline=False)
         embed.add_field(name="$unsubscribe ____________ ^", value="Stops posting tweets by the requested user", inline=False)
         embed.add_field(name="$listsubs", value="Lists all twitter users that are being tracked by this channel", inline=False)
         await message.channel.send(embed=embed)
