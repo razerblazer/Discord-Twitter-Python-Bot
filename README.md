@@ -8,6 +8,6 @@ The bot uses the Tweepy.py API to access the needed [twitter data](https://twitt
 - `$unsubscribe ______`: The user can similarly type in this command to stop tracking the posts of a particular user that the discord channel is already subscribed to.
 - `$listsubs`: This command will generate a discord embed that lists all of the twitter users the channel is subscribed to in the channel this command was typed in. 
 
-# Bug fixes(Just Features lol) and New Stuff:
+# Bug Fixes(definitely just features) and New Stuff:
 v1.1(I guess?) fixed issue where the bot subscribed to a user with no tweets in their timeline would return emptylist which resulted in a error when running through the dictionary
 v2.0 Added mode 1 or 2 as posting options. Option 1 will post all activity of that twitter user, option 2 posts everything except for replies. If user subscribes without specifying mode, bot will default that user to mode 1. Currently only way to change modes is to unsubscribe and resubscribe with the desired mode. Will add a change mode feature sometime in the future. 
