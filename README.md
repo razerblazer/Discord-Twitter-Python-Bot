@@ -1,6 +1,9 @@
 # Discord-Twitter-Python-Bot
 This bot uploads the URL of any recent Twitter posts made by a user. A discord channel has the ability to "subscribe" to any specific Twitter user and the bot will alert that specific channel of any new Tweets made by that particular user.
 
+#NOTICE
+Due to twitter getting rid of the free tier for api access, you will unfortunately have to pull out your precious wallet if you want things to work.
+
 # Command and Implementation Details
 The bot uses the Tweepy.py API to access the needed [twitter data](https://twitter.com/). The bot is always on standby and reacts to specific messages that contains the special $ character and carries out the action based on what was given. When a channel requests to "watch" a specific Twitter user's Tweets, the bot will keep track of the channel objects that made this request per Twitter user. The bot stores the id of the most latest tweet and it makes a request at a set time interval to return the id of the most recent twitter post for that user. If the user has indeed posted a new Tweet, the bot will generate a link to that specifc tweet for that user and notify all channels that have requested them. There is a secondary dictionary that stores all guild and channel ids that are associated per twitter user so that if the bot were to be restarted, all the stored channel objects do not have to be reentered in again. 
 # Current Implemented Commands:
